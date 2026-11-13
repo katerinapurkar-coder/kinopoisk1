@@ -1,0 +1,125 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Сериальная галактика</title>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#261b52 0%,#0d1129 55%,#070a1a 100%);color:#E9ECFA;font-family:Onest,system-ui,sans-serif}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
+header{position:fixed;top:max(16px,env(safe-area-inset-top));left:20px;pointer-events:none;max-width:60vw}
+h1{margin:0;font-size:clamp(26px,4.2vw,46px);font-weight:800;letter-spacing:-.02em;line-height:1}
+header p{margin:8px 0 0;font-size:13px;line-height:1.45;color:#9AA3C7;max-width:44ch}
+#stat{position:fixed;top:max(16px,env(safe-area-inset-top));right:20px;text-align:right;font-size:12.5px;color:#9AA3C7;pointer-events:none}
+#stat b{display:block;font-size:32px;color:#fff;font-weight:800;line-height:1.1}
+#chips{position:fixed;left:20px;top:130px;display:flex;flex-direction:column;gap:6px;align-items:flex-start}
+button{font:inherit;color:#E9ECFA;cursor:pointer}
+.chip,#lay button{font-size:12.5px;border:1px solid rgba(255,255,255,.16);background:rgba(14,18,44,.55);padding:5px 11px;border-radius:99px;display:flex;align-items:center;gap:7px;backdrop-filter:blur(8px)}
+.chip i{width:9px;height:9px;border-radius:50%}
+[aria-pressed=true]{background:#E9ECFA!important;color:#0d1129!important}
+button:focus-visible,input:focus-visible{outline:2px solid #8F9BFF;outline-offset:2px}
+footer{position:fixed;left:16px;right:16px;bottom:max(16px,env(safe-area-inset-bottom));max-width:920px;margin:auto;display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:12px 16px;border-radius:18px;background:rgba(14,18,44,.62);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(12px)}
+#pl{width:44px;height:44px;border-radius:50%;border:0;background:#E9ECFA;color:#0d1129;font-size:16px;flex:none}
+.sl{flex:1;min-width:200px;display:flex;align-items:center;gap:14px}
+#yr{font-size:30px;font-weight:800;width:74px;font-variant-numeric:tabular-nums}
+#sli{flex:1;accent-color:#8F9BFF}
+#lay{display:flex;gap:6px;flex-wrap:wrap}
+#tip{position:fixed;display:none;pointer-events:none;background:rgba(10,14,36,.92);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:10px 12px;font-size:12.5px;line-height:1.5;max-width:250px;z-index:5}
+#tip b{font-size:15px}#tip span{color:#9AA3C7}
+@media(max-width:700px){#chips{top:auto;bottom:150px;flex-direction:row;flex-wrap:wrap;right:20px}header{max-width:70vw}header p{display:none}#hint{display:block}}
+</style></head><body>
+<canvas id="c"></canvas>
+<header><h1>Сериальная галактика</h1><p id="hint"></p></header>
+<div id="stat"></div><div id="chips"></div>
+<footer><button id="pl" aria-label="Воспроизвести">▶</button>
+<div class="sl"><b id="yr">1990</b><input id="sli" type="range" min="1990" max="2027" step="0.01" value="1990" aria-label="Год"></div>
+<div id="lay"></div></footer><div id="tip"></div>
+<script>
+const D=[["Во все тяжкие", 2008, 2013, 0, "США", "криминал", 8.9, 910842, "Мишель Макларен", "Брайан Крэнстон, Анна Ганн"], ["Игра престолов", 2011, 2019, 0, "США", "фэнтези", 9.0, 1745000, "Дэвид Наттер", "Питер Динклэйдж, Лина Хиди"], ["Чернобыль", 2019, 2019, 0, "США", "драма", 8.7, 851258, "Йохан Ренк", "Джаред Харрис, Стеллан Скарсгард"], ["Твин Пикс", 1990, 2017, 0, "США", "триллер", 8.4, 260112, "Дэвид Линч", "Кайл Маклоклен, Майкл Онткин"], ["Настоящий детектив", 2014, 2026, 1, "США", "детектив", 8.5, 582201, "Кэри Дзёдзи Фукунага", "Мэттью Макконахи, Вуди Харрельсон"], ["Фарго", 2014, 2026, 1, "США", "триллер", 8.3, 243196, "Ноа Хоули", "Мартин Фриман, Билли Боб Торнтон"], ["Безумцы", 2007, 2015, 0, "США", "драма", 7.9, 32429, "Фил Абрахам", "Джон Хэмм, Элизабет Мосс"], ["Прослушка", 2002, 2008, 0, "США", "триллер", 8.5, 87002, "Джо Чеппелл", "Доминик Уэст, Лэнс Реддик"], ["Наследники", 2018, 2023, 0, "США", "драма", 8.1, 135484, "Марк Майлод", "Брайан Кокс, Джереми Стронг"], ["Дрянь", 2016, 2019, 0, "Великобритания", "драма", 8.3, 90913, "Гарри Брэдбир", "Фиби Уоллер-Бридж, Шан Клиффорд"], ["Карточный домик", 2013, 2018, 0, "США", "драма", 8.3, 115526, "Джеймс Фоули", "Робин Райт, Майкл Келли"], ["Офис", 2005, 2013, 0, "США", "комедия", 8.7, 254235, "Пол Фиг", "Стив Карелл, Рэйн Уилсон"], ["Очень странные дела", 2016, 2025, 0, "США", "ужасы", 8.3, 875244, "Мэтт Даффер", "Вайнона Райдер, Дэвид Харбор"], ["Молодой Папа", 2016, 2016, 0, "Италия", "драма", 8.2, 213077, "Паоло Соррентино", "Джуд Лоу, Дайан Китон"], ["Остаться в живых", 2004, 2010, 0, "США", "фантастика", 8.1, 433549, "Джек Бендер", "Мэттью Фокс, Эванджелин Лилли"], ["Чёрное зеркало", 2011, 2026, 1, "Великобритания", "фантастика", 8.5, 436372, "Тоби Хэйнс", "Дэниэл Калуя, Тоби Кеббелл"], ["Шерлок", 2010, 2017, 0, "Великобритания", "детектив", 8.8, 725893, "Пол Макгиган", "Бенедикт Камбербэтч, Мартин Фриман"], ["Доктор Хаус", 2004, 2012, 0, "США", "драма", 8.8, 560735, "Грег Яйтанс", "Хью Лори, Роберт Шон Леонард"], ["Рик и Морти", 2013, 2026, 1, "США", "мультфильм", 8.8, 1201000, "Уэсли Арчер", "Джастин Ройланд, Крис Парнелл"], ["Больница Никербокер", 2014, 2015, 0, "США", "драма", 8.3, 100212, "Стивен Содерберг", "Клайв Оуэн, Андре Холланд"], ["Лучше звоните Солу", 2015, 2022, 0, "США", "драма", 8.5, 248786, "Винс Гиллиган", "Боб Оденкёрк, Джонатан Бэнкс"], ["Корона", 2016, 2023, 0, "Великобритания", "драма", 8.4, 93503, "Бенджамин Карон", "Клэр Фой, Оливия Колман"], ["Теория большого взрыва", 2007, 2019, 0, "США", "комедия", 8.6, 526541, "Марк Сендроуски", "Джонни Галэки, Джим Парсонс"], ["Эйфория", 2019, 2026, 0, "США", "драма", 7.5, 521032, "Сэм Левинсон", "Зендея, Хантер Шафер"], ["Родина", 2011, 2020, 0, "США", "триллер", 8.1, 73736, "Лесли Линка Глаттер", "Клэр Дэйнс, Мэнди Пэтинкин"], ["Мост", 2011, 2018, 0, "Швеция", "триллер", 8.3, 140717, "Хенрик Георгссон", "София Хелин, Ким Бодния"], ["Охотник за разумом", 2017, 2019, 0, "США", "триллер", 8.1, 128252, "Дэвид Финчер", "Джонатан Грофф, Холт Маккэллани"], ["Большая маленькая ложь", 2017, 2026, 0, "США", "детектив", 8.2, 304781, "Жан-Марк Валле", "Риз Уизерспун, Николь Кидман"], ["Конь БоДжек", 2014, 2020, 0, "США", "мультфильм", 8.5, 59725, "Эми Уинфри", "Уилл Арнетт, Эми Седарис"], ["Атланта", 2016, 2022, 0, "США", "драма", 7.8, 15340, "Хиро Мураи", "Дональд Гловер, Брайан Тайри Генри"], ["Гравити Фолз", 2012, 2016, 0, "США", "мультфильм", 8.9, 822923, "Джо Питт", "Джейсон Риттер, Алекс Хирш"], ["Бригада", 2002, 2002, 0, "Россия", "драма", 8.3, 718589, "Алексей Сидоров", "Сергей Безруков, Дмитрий Дюжев"], ["Девочки", 2012, 2017, 0, "США", "драма", 7.4, 28818, "Лина Данэм", "Лина Данэм, Эллисон Уильямс"], ["Чики", 2020, 2020, 0, "Россия", "драма", 7.7, 305946, "Эдуард Оганесян", "Ирина Горбачёва, Ирина Носова"], ["Оставленные", 2014, 2017, 0, "США", "фэнтези", 7.7, 30714, "Мими Ледер", "Джастин Теру, Эми Бреннеман"], ["Клиника", 2001, 2026, 1, "США", "комедия", 8.7, 311184, "Майкл Спиллер", "Зак Брафф, Дональд Фэйсон"], ["Озарк", 2017, 2022, 0, "США", "триллер", 7.9, 112208, "Джейсон Бейтман", "Джейсон Бейтман, Лора Линни"], ["Сексуальное просвещение", 2019, 2023, 0, "Великобритания", "драма", 8.0, 250555, "Бен Тэйлор", "Эйса Баттерфилд, Джиллиан Андерсон"], ["Тед Лассо", 2020, 2026, 0, "США", "комедия", 8.5, 152386, "Деклан Лауни", "Джейсон Судейкис, Бретт Голдстин"], ["Острые козырьки", 2013, 2022, 0, "Великобритания", "криминал", 8.3, 619005, "Энтони Бирн", "Киллиан Мерфи, Пол Андерсон"], ["Пацаны", 2019, 2026, 0, "США", "фантастика", 8.2, 479376, "Филип Сгриккиа", "Карл Урбан, Джек Куэйд"], ["Ликвидация", 2007, 2007, 0, "Россия", "детектив", 8.6, 391721, "Сергей Урсуляк", "Владимир Машков, Михаил Пореченков"], ["Как я встретил вашу маму", 2005, 2014, 0, "США", "комедия", 8.6, 271087, "Памела Фрайман", "Джош Рэднор, Нил Патрик Харрис"], ["Сообщество", 2009, 2015, 0, "США", "комедия", 8.0, 43508, "Тристрам Шапиро", "Джоэл Макхэйл, Гиллиан Джейкобс"], ["Оттепель", 2013, 2013, 0, "Россия", "драма", 7.8, 59182, "Валерий Тодоровский", "Евгений Цыганов, Александр Яценко"], ["Удивительная миссис Мейзел", 2017, 2023, 0, "США", "драма", 8.4, 70940, "Эми Шерман-Палладино", "Рэйчел Броснахэн, Алекс Борштейн"], ["Однажды ночью", 2016, 2016, 0, "США", "драма", 7.8, 155230, "Стивен Зеллиан", "Джон Туртурро, Риз Ахмед"], ["Подпольная империя", 2010, 2014, 0, "США", "драма", 8.2, 87553, "Тимоти Ван Паттен", "Стив Бушеми, Майкл Питт"], ["Доктор Кто", 2005, 2022, 0, "Великобритания", "фантастика", 8.6, 158990, "Грэм Харпер", "Дэвид Теннант, Мэтт Смит"], ["Любовники", 2014, 2019, 0, "США", "драма", 7.5, 19128, "Джеффри Рейнер", "Доминик Уэст, Мора Тирни"]];
+const CC={'США':'#56B4E9','Великобритания':'#E69F00','Россия':'#F0566E','Италия':'#2CC79B','Швеция':'#CC79A7'};
+const $=id=>document.getElementById(id),cv=$('c'),ctx=cv.getContext('2d'),tip=$('tip');
+const RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const hex=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16));
+const rg=(c,a)=>`rgba(${c[0]|0},${c[1]|0},${c[2]|0},${a})`;
+const B=D.map(d=>({n:d[0],s:d[1],e:d[2],on:d[3],c:d[4],g:d[5],r:d[6],v:d[7],dir:d[8],cast:d[9],x:0,y:0,vx:0,vy:0,tr:[],ph:Math.random()*6.28,rgb:hex(CC[d[4]])})).sort((a,b)=>b.v-a.v);
+const G=[...new Set(B.map(b=>b.g))];
+G.forEach((g,gi)=>{const m=B.filter(b=>b.g===g);m.forEach((b,j)=>{b.gi=gi;b.j=j;b.m=m.length})});
+B.forEach(b=>{b.z=3+Math.sqrt(b.v/1745e3)*17;b.w=.25+.9*(1-Math.sqrt(b.v/1745e3))});
+const ST=Array.from({length:150},()=>[Math.random(),Math.random(),Math.random()*1.2+.3,Math.random()*.9+.1]);
+let W,H,R,WX,dpr,year=RM?2026.9:1990,playing=!RM,lay=0,la=[1,0,0],flt=null,sel=null,follow=false,hov=null,lastHov=0,mx=-1,my=-1,T=0,fc=0,last=performance.now(),lastStat='';
+const cam={x:0,y:0,k:1,tx:0,ty:0,tk:1};
+const HT=['Расстояние от ядра — рейтинг, сектор — жанр. Размер — число оценок.','По горизонтали — число оценок, по вертикали — рейтинг.','Созвездия — жанры. Размер — число оценок.'];
+function rs(){dpr=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*dpr;cv.height=H*dpr;R=Math.min(W,H)*.4;WX=Math.min(W*.4,R*1.5)}
+addEventListener('resize',rs);rs();
+const S=(x,y)=>[W/2+(x-cam.x)*cam.k,H*.46+(y-cam.y)*cam.k];
+function tgt(b,t){
+ if(lay==0){const sw=6.283/G.length,a=b.gi*sw-1.5708+(b.j/b.m-.5)*sw*.75+Math.sin(T*b.w+b.ph)*sw*.12,r=R*(.17+(9-b.r)/1.6*.78);return[Math.cos(a)*r,Math.sin(a)*r]}
+ if(lay==1)return[((Math.log10(b.v)-4.17)/2.08*2-1)*WX,-(b.r-8.2)/.8*R*.8];
+ const a=b.gi/G.length*6.283-1.5708,sp=R*.07,rr=sp*Math.sqrt(b.j+.5),aa=b.j*2.4;
+ return[Math.cos(a)*Math.min(W*.34,R*1.3)+Math.cos(aa)*rr,Math.sin(a)*R*.6+Math.sin(aa)*rr]}
+function txt(s,x,y,a,al='center'){ctx.fillStyle=rg([190,198,235],a);ctx.textAlign=al;ctx.fillText(s,x,y)}
+function decor(){
+ const[cx,cy]=S(0,0),k=cam.k;ctx.font='11px Onest,system-ui';
+ ctx.fillStyle='#fff';ST.forEach(s=>{const x=((s[0]*W-cam.x*s[3]*.15+T*s[3]*2)%W+W)%W,y=((s[1]*H-cam.y*s[3]*.15)%H+H)%H;ctx.globalAlpha=.25+.35*Math.abs(Math.sin(T*s[3]+s[0]*30));ctx.fillRect(x,y,s[2],s[2])});ctx.globalAlpha=1;
+ let a=la[0];
+ if(a>.01){const g=ctx.createRadialGradient(cx,cy,0,cx,cy,R*.34*k);g.addColorStop(0,rg([255,214,150],.55*a));g.addColorStop(1,rg([255,214,150],0));ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  [7.5,8,8.5,9].forEach(r=>{const rad=R*(.17+(9-r)/1.6*.78)*k;ctx.strokeStyle=rg([255,255,255],.07*a);ctx.beginPath();ctx.arc(cx,cy,rad,0,6.283);ctx.stroke();txt(r,cx,cy-rad-3,.3*a)});
+  const sw=6.283/G.length;G.forEach((g,i)=>{const b=(i-.5)*sw-1.5708,c=i*sw-1.5708;ctx.strokeStyle=rg([255,255,255],.06*a);ctx.beginPath();ctx.moveTo(cx+Math.cos(b)*R*.12*k,cy+Math.sin(b)*R*.12*k);ctx.lineTo(cx+Math.cos(b)*R*1.0*k,cy+Math.sin(b)*R*1.0*k);ctx.stroke();txt(g,cx+Math.cos(c)*R*1.07*k,cy+Math.sin(c)*R*1.07*k+4,.75*a)})}
+ a=la[1];
+ if(a>.01){[7.5,8,8.5,9].forEach(r=>{const[x0,y0]=S(-WX,-(r-8.2)/.8*R*.8),[x1]=S(WX,0);ctx.strokeStyle=rg([255,255,255],.07*a);ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(x1,y0);ctx.stroke();txt(r,x0-8,y0+4,.5*a,'right')});
+  [[2e4,'20 тыс.'],[1e5,'100 тыс.'],[5e5,'500 тыс.'],[1e6,'1 млн']].forEach(([v,l])=>{const[x,y0]=S(((Math.log10(v)-4.17)/2.08*2-1)*WX,-R*.8),[,y1]=S(0,R*.8);ctx.strokeStyle=rg([255,255,255],.07*a);ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y1);ctx.stroke();txt(l,x,y1+16,.5*a)})}
+ a=la[2];
+ if(a>.01)G.forEach((g,i)=>{const m=B.filter(b=>b.gi==i).length,an=i/G.length*6.283-1.5708,[x,y]=S(Math.cos(an)*Math.min(W*.34,R*1.3),Math.sin(an)*R*.6-R*.07*Math.sqrt(m+.5)-26);ctx.font='600 12px Onest,system-ui';txt(g,x,y,.8*a)})}
+function hit(){let best=1e9,r=null;if(mx<0)return null;B.forEach(b=>{if(year<b.s||(flt&&b.c!=flt))return;const[sx,sy]=S(b.x,b.y),d=Math.hypot(sx-mx,sy-my);if(d<Math.max(b.z*cam.k+8,14)&&d<best){best=d;r=b}});return r}
+function body(b){
+ if(year<b.s)return;
+ const dead=year>=b.e+1,cool=dead?Math.min((year-b.e-1)/3,1):0,match=!flt||b.c==flt;
+ let a=(1-.62*cool)*(match?1:.1)*((hov&&hov!==b&&b!==sel)?.5:1);
+ const col=b.rgb.map((v,i)=>v+([120,126,150][i]-v)*cool*.75),[sx,sy]=S(b.x,b.y),age=year-b.s,fl=!RM&&age<.9&&playing!==undefined?age/.9:1;
+ let z=b.z*cam.k*(b===hov?1.25:1)*(match?1:.7);const pu=dead||RM?1:1+.1*Math.sin(T*3+b.ph);
+ if(!RM&&b.tr.length>1){ctx.lineWidth=Math.max(1,z*.5);for(let i=1;i<b.tr.length;i++){const p=S(...b.tr[i-1]),q=S(...b.tr[i]);ctx.strokeStyle=rg(col,a*.2*i/b.tr.length);ctx.beginPath();ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1]);ctx.stroke()}}
+ const boost=fl<1?1+(1-fl)*1.8:1;
+ ctx.globalCompositeOperation='lighter';
+ const g=ctx.createRadialGradient(sx,sy,0,sx,sy,z*3.4*pu*boost);g.addColorStop(0,rg(col,.6*a));g.addColorStop(1,rg(col,0));ctx.fillStyle=g;ctx.beginPath();ctx.arc(sx,sy,z*3.4*pu*boost,0,6.283);ctx.fill();
+ if(fl<1){ctx.strokeStyle=rg(col,(1-fl)**1.5*a);ctx.lineWidth=2;ctx.beginPath();ctx.arc(sx,sy,z*(1+fl*9),0,6.283);ctx.stroke();for(let i=0;i<10;i++){const an=i*.628+b.ph,r0=z*(1.5+fl*7),r1=r0+z*(1-fl)*3;ctx.beginPath();ctx.moveTo(sx+Math.cos(an)*r0,sy+Math.sin(an)*r0);ctx.lineTo(sx+Math.cos(an)*r1,sy+Math.sin(an)*r1);ctx.stroke()}}
+ ctx.globalCompositeOperation='source-over';
+ ctx.fillStyle=rg(col,.92*a);ctx.beginPath();ctx.arc(sx,sy,z*pu,0,6.283);ctx.fill();
+ ctx.fillStyle=rg([255,255,255],.55*a);ctx.beginPath();ctx.arc(sx-z*.25,sy-z*.25,z*.3,0,6.283);ctx.fill();
+ if(match&&(b.v>6e5||b===hov||b===sel)){ctx.font='12px Onest,system-ui';txt(b.n,sx,sy+z+15,(b===hov||b===sel?1:.6)*a)}}
+function frame(now){
+ const dt=Math.min((now-last)/1000,.033);last=now;T+=dt;fc++;
+ if(playing){year+=dt/1.15;if(year>=2027){year=2027;setPlay(false)}$('sli').value=year}
+ $('yr').textContent=Math.floor(Math.min(year,2026.99));
+ const kk=1-Math.exp(-dt*5);
+ if(sel&&follow){cam.tx=sel.x;cam.ty=sel.y}
+ cam.x+=(cam.tx-cam.x)*kk;cam.y+=(cam.ty-cam.y)*kk;cam.k+=(cam.tk-cam.k)*kk;
+ la=la.map((v,i)=>v+((lay==i?1:0)-v)*kk);
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);decor();
+ B.forEach(b=>{const[tx,ty]=tgt(b);b.vx+=(tx-b.x)*55*dt;b.vy+=(ty-b.y)*55*dt;const d=Math.exp(-dt*8);b.vx*=d;b.vy*=d;b.x+=b.vx*dt;b.y+=b.vy*dt;if(fc%3==0&&!RM){b.tr.push([b.x,b.y]);if(b.tr.length>14)b.tr.shift()}});
+ hov=hit();
+ if(sel){const[sx,sy]=S(sel.x,sel.y);B.forEach(o=>{if(o===sel||year<o.s||(o.g!=sel.g&&o.c!=sel.c))return;const[ox,oy]=S(o.x,o.y);ctx.globalCompositeOperation='lighter';ctx.strokeStyle=rg(sel.rgb,o.g==sel.g?.5:.22);ctx.lineWidth=1.3;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(ox,oy);ctx.stroke();ctx.globalCompositeOperation='source-over'})}
+ B.forEach(body);if(hov)body(hov);
+ if(hov!==lastHov){lastHov=hov;if(hov){tip.innerHTML=`<b>${hov.n}</b><br><span>${hov.s}–${hov.on?'…':hov.e} · ${hov.c} · ${hov.g}</span><br>Режиссёр: ${hov.dir}<br><span>${hov.cast}</span><br>★ <b>${hov.r.toFixed(1)}</b> · ${hov.v.toLocaleString('ru-RU')} оценок`;tip.style.display='block'}else tip.style.display='none'}
+ const al=B.filter(b=>year>=b.s&&year<b.e+1),st=al.length?`<b>${al.length}</b>в эфире · ср. рейтинг ${(al.reduce((s,b)=>s+b.r,0)/al.length).toFixed(2)}`:'<b>0</b>в эфире';
+ if(st!==lastStat){$('stat').innerHTML=st;lastStat=st}
+ requestAnimationFrame(frame)}
+function setPlay(p){playing=p;$('pl').textContent=p?'❚❚':'▶';$('pl').setAttribute('aria-label',p?'Пауза':'Воспроизвести')}
+function setLay(i){lay=i;[...$('lay').children].forEach((b,j)=>b.setAttribute('aria-pressed',j==i));$('hint').textContent=HT[i]}
+function reset(){sel=null;follow=false;cam.tx=cam.ty=0;cam.tk=1}
+['1 · Галактика','2 · Карта популярности','3 · Кластеры'].forEach((t,i)=>{const b=document.createElement('button');b.textContent=t;b.onclick=()=>setLay(i);$('lay').appendChild(b)});
+Object.keys(CC).forEach(c=>{const b=document.createElement('button');b.className='chip';b.innerHTML=`<i style="background:${CC[c]}"></i>${c}`;b.setAttribute('aria-pressed',false);b.onclick=()=>{flt=flt==c?null:c;[...$('chips').children].forEach(x=>x.setAttribute('aria-pressed',x===b&&flt!==null))};$('chips').appendChild(b)});
+$('pl').onclick=()=>{if(!playing&&year>=2027)year=1990;setPlay(!playing)};
+$('sli').oninput=e=>{year=+e.target.value;setPlay(false)};
+let dr=null;
+cv.onpointerdown=e=>{mx=e.clientX;my=e.clientY;dr={x:e.clientX,y:e.clientY,m:0};cv.setPointerCapture(e.pointerId)};
+cv.onpointermove=e=>{mx=e.clientX;my=e.clientY;tip.style.left=Math.min(mx+16,W-262)+'px';tip.style.top=Math.min(my+16,H-190)+'px';
+ if(dr){const dx=e.clientX-dr.x,dy=e.clientY-dr.y;dr.m+=Math.abs(dx)+Math.abs(dy);dr.x=e.clientX;dr.y=e.clientY;if(dr.m>6){follow=false;cam.tx-=dx/cam.k;cam.ty-=dy/cam.k;cam.x-=dx/cam.k;cam.y-=dy/cam.k}}};
+cv.onpointerup=()=>{if(dr&&dr.m<=6){const h=hit();if(h){sel=h;follow=true;cam.tk=2}else reset()}dr=null};
+cv.onpointerleave=()=>{if(!dr)mx=-1};
+cv.addEventListener('wheel',e=>{e.preventDefault();cam.tk=Math.min(4,Math.max(.5,cam.tk*Math.exp(-e.deltaY*.0012)))},{passive:false});
+addEventListener('keydown',e=>{if(/BUTTON|INPUT/.test(e.target.tagName)&&e.key==' ')return;
+ if(e.key==' '){e.preventDefault();$('pl').click()}
+ else if(e.key=='ArrowRight'){year=Math.min(2027,Math.floor(year)+1);setPlay(false);$('sli').value=year}
+ else if(e.key=='ArrowLeft'){year=Math.max(1990,Math.ceil(year)-1);setPlay(false);$('sli').value=year}
+ else if('123'.includes(e.key)&&e.key)setLay(+e.key-1);
+ else if(e.key=='Escape')reset()});
+setLay(0);setPlay(playing);$('sli').value=year;requestAnimationFrame(frame);
+</script></body></html>
